@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 Spyder Editor
-
 This is a temporary script file.
 """
+import time
+start= time.process_time()
+
 from numpy import mean, sqrt, square
 import math
 import numpy as np
@@ -70,7 +72,7 @@ def Thomas(T,aP,aW,aE,Su,n,Cp,A,TB,tolerance):
               rh[i]=Su[i]+aW[i]*T[i-1]+aE[i]*T[i+1]-aP[i]*T[i]
        residual=sqrt(mean(square(rh)))          
      
-    return T
+    return T,residual,iter_GS
 
 #____________________________________________________________________
 def GaussSeidel(aW,aP,aE,Su,n,T,tolerance):
@@ -102,8 +104,12 @@ def SOR(aW,aP,aE,Su,n,T,tolerance):
             T[i]=(1.0-param)*T0[i]+param*(Su[i]+aW[i]*T[i-1]+aE[i]*T[i+1])/aP[i]
     
         iter_GS=iter_GS+1 
+
+        for i in range(1,n-1):  #i+1=número de nodo
+            rh[i]=Su[i]+aW[i]*T[i-1]+aE[i]*T[i+1]-aP[i]*T[i]
+        residual=sqrt(mean(square(rh)))   
           
-    return T
+    return T,residual,iter_GS
 #____________________________________________________________________
 def boundaries(T,n,dx,Tamb,TB):
     T[0]=TB
@@ -129,11 +135,15 @@ def Plot_T(T,x,dx,Lenght,n):
 #Programa principal
 
 aW,aP,aE,Su = Ecdiscreta(dx,hPkA,Tamb,TB,n) #Se calculan los coeficientes aW,aE,ap,Su,Sp
-#T=Thomas(T,aP,aW,aE,Su,n,Cp,A,TB,tolerance)    #Se resuelve la matriz Tridiagonal por el algoritmo de Thomas
+#T,residual,iter_GS=Thomas(T,aP,aW,aE,Su,n,Cp,A,TB,tolerance)    #Se resuelve la matriz Tridiagonal por el algoritmo de Thomas
 #T,residual,iter_GS=GaussSeidel(aW,aP,aE,Su,n,T,tolerance)   #Se resuelve la matriz Tridiagonal por el algoritmo de Thomas
-T=SOR(aW,aP,aE,Su,n,T,tolerance)   
-
+T,residual,iter_GS=SOR(aW,aP,aE,Su,n,T,tolerance)   
 
 T=boundaries(T,n,dx,Tamb,TB)
 Plot_T(T,x,dx,Lenght,n)
-     
+
+print(T)
+print(residual)
+print(iter_GS)
+end= time.process_time()
+print(end-start)
