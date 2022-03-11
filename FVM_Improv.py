@@ -45,21 +45,31 @@ def Ecdiscreta(dx,hpkA,Tamb,TB,n):
         
     return aW,aP,aE,Su
 #____________________________________________________________________
-def Thomas(T,aP,aW,aE,Su,n,Cp,A,TB):
+def Thomas(T,aP,aW,aE,Su,n,Cp,A,TB,tolerance):
 
-    TA=0
-    Cp[0]=TB
-    Cp[n-1]=T[n-1]
+    max_iter=1000; residual=1; iter_GS=0
+    
+    while iter_GS < max_iter and residual > tolerance:  
 
-    for i in range(1,n-1):
-        A[i]=aE[i]/(aP[i]-(aW[i]*A[i-1]))
-        Cp[i]=(aW[i]*Cp[i-1]+Su[i])/(aP[i]-aW[i]*A[i-1])     
+       TA=0
+       Cp[0]=TB
+       Cp[n-1]=T[n-1]
+
+       for i in range(1,n-1):
+              A[i]=aE[i]/(aP[i]-(aW[i]*A[i-1]))
+              Cp[i]=(aW[i]*Cp[i-1]+Su[i])/(aP[i]-aW[i]*A[i-1])     
   
-    T[n-1]=A[n-1]*TA+Cp[n-1]
+       T[n-1]=A[n-1]*TA+Cp[n-1]
           
-    for k in range(n-2,-1,-1):
-        T[k]=A[k]*T[k+1]+Cp[k]
+       for k in range(n-2,-1,-1):
+              T[k]=A[k]*T[k+1]+Cp[k]
 
+       iter_GS=iter_GS+1 
+          
+       for i in range(1,n-1):  #i+1=número de nodo
+              rh[i]=Su[i]+aW[i]*T[i-1]+aE[i]*T[i+1]-aP[i]*T[i]
+       residual=sqrt(mean(square(rh)))          
+     
     return T
 
 #____________________________________________________________________
@@ -119,7 +129,7 @@ def Plot_T(T,x,dx,Lenght,n):
 #Programa principal
 
 aW,aP,aE,Su = Ecdiscreta(dx,hPkA,Tamb,TB,n) #Se calculan los coeficientes aW,aE,ap,Su,Sp
-#T=Thomas(T,aP,aW,aE,Su,n,Cp,A,TB)    #Se resuelve la matriz Tridiagonal por el algoritmo de Thomas
+#T=Thomas(T,aP,aW,aE,Su,n,Cp,A,TB,tolerance)    #Se resuelve la matriz Tridiagonal por el algoritmo de Thomas
 #T,residual,iter_GS=GaussSeidel(aW,aP,aE,Su,n,T,tolerance)   #Se resuelve la matriz Tridiagonal por el algoritmo de Thomas
 T=SOR(aW,aP,aE,Su,n,T,tolerance)   
 
