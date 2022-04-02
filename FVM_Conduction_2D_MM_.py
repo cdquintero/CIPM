@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 nl=3
 
 lx=1; ly=1; z=0.01
-dxlh=[0.0125]; dylh=[0.0125]
+dxlh=[0.0625]; dylh=[0.0625]
 nxlh=[math.ceil(lx/dxlh[0]+2)]; nylh=[math.ceil(ly/dylh[0]+2)]
 x=np.zeros(int(nxlh[0])); y=np.zeros(int(nylh[0]))
 aWlh=[np.zeros([int(nxlh[0]),int(nylh[0])])]; aElh=[np.zeros([int(nxlh[0]),int(nylh[0])])]
@@ -116,7 +116,7 @@ def Residual(aPlh,aSlh,aNlh,aWlh,aElh,Sulh,nxlh,nylh,T):
    
    for i in range(1,nxlh-1):  
        for j in range(1,nylh-1):  
-           rh[i,j]=Sulh[i,j]-(aPlh[i,j]*T[i,j]-aSlh[i,j]*T[i,j-1]-aNlh[i,j]*T[i,j+1]-aWlh[i,j]*T[i-1,j]-aNlh[i,j]*T[i+1,j])
+#           rh[i,j]=Sulh[i,j]-(aPlh[i,j]*T[i,j]-aSlh[i,j]*T[i,j-1]-aNlh[i,j]*T[i,j+1]-aWlh[i,j]*T[i-1,j]-aNlh[i,j]*T[i+1,j])
            acum[i,j]=Sulh[i,j]+aWlh[i,j]*T[i-1,j]+aElh[i,j]*T[i+1,j]+aSlh[i,j]*T[i,j-1]+aNlh[i,j]*T[i,j+1]-aPlh[i,j]*T[i,j]                
                 
    residual = np.sqrt(np.mean(np.square(acum)))  #VRMS del valor residual
