@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 Spyder Editor
 
@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 import math
 
 #Definicion de variables
-lx=1; ly=1  ; z=0.01                                       #Longitud 
-dx=0.0625; dy=0.0625                                             #Pasos
+lx=0.4; ly=0.4  ; z=0.01                                       #Longitud 
+dx=0.0125; dy=0.0125                                             #Pasos
 nx=math.ceil(lx/dx)+2; ny=math.ceil(ly/dy)+2; n=nx*ny        #Numero de nodos
 x=np.zeros(nx); y=np.zeros(ny)                               #Malla Graficas
 Tos=0; Ton=100; Toe=0; flux=500000;                          #Condiciones de Frontera
@@ -88,9 +88,9 @@ def Ecdiscreta(dx,dy,z,Aew,Asn,k,Tos,Ton,flux,Toe,nx,ny):
 
 def Sor_2D(param,aS,ap,aN,aW,aE,Su,nx,ny,f):
 
-    tolerance=1e-7; max_iter=1000; count_iter=0; residual=1.0        #Criterios de Convergencia
+    tolerance=1e-7; max_iter=100000; count_iter=0; residual=1.0        #Criterios de Convergencia
 
-    while count_iter <= max_iter and residual > tolerance:  
+    while count_iter <= max_iter and residual >  tolerance:  
     
         f0=f                                                         #Valor inicial de la funcion
    
@@ -102,16 +102,16 @@ def Sor_2D(param,aS,ap,aN,aW,aE,Su,nx,ny,f):
         count_iter=count_iter+1                                       #Numero de iteraciones del codigo
         for i in range(1,nx-1):  
             for j in range(1,ny-1):  
-                 
-                residual = np.sqrt(np.mean(np.square(f[i,j]-acum[i,j])))  #VRMS del valor residual
-                acum[i,j] = f[i,j]
-
+                acum[i,j]=Su[i,j]+aW[i,j]*T[i-1,j]+aE[i,j]*T[i+1,j]+aS[i,j]*T[i,j-1]+aN[i,j]*T[i,j+1]-ap[i,j]*T[i,j]                
+                
+        residual = np.sqrt(np.mean(np.square(acum)))  #VRMS del valor residual
+    
     return f,count_iter,residual
 #____________________________________________________________________
 
 def GaussSeidel(aS,ap,aN,aW,aE,Su,nx,ny,f):
 
-    tolerance=1e-7; max_iter=10000; count_iter=0; residual=1.0        #Criterios de Convergencia
+    tolerance=1e-7; max_iter=100000; count_iter=0; residual=1.0        #Criterios de Convergencia
 
     while count_iter <= max_iter and residual > tolerance:  
       
@@ -123,9 +123,9 @@ def GaussSeidel(aS,ap,aN,aW,aE,Su,nx,ny,f):
    
         for i in range(1,nx-1):  
             for j in range(1,ny-1):  
-                acum[i,j]=Su[i,j]+aW[i,j]*T[i-1,j]+aE[i,j]*T[i+1,j]+aS[i,j]*T[i,j-1]+aN[i,j]*T[i,j+1]-ap[i]*T[i]                
+                acum[i,j]=Su[i,j]+aW[i,j]*T[i-1,j]+aE[i,j]*T[i+1,j]+aS[i,j]*T[i,j-1]+aN[i,j]*T[i,j+1]-ap[i,j]*T[i,j]                
                 
-    residual = np.sqrt(np.mean(np.square(acum)))  #VRMS del valor residual
+        residual = np.sqrt(np.mean(np.square(acum)))  #VRMS del valor residual
           
     return f,count_iter,residual
 
@@ -134,7 +134,7 @@ def GaussSeidel(aS,ap,aN,aW,aE,Su,nx,ny,f):
 
 def Thomas(aS,ap,aN,aW,aE,Su,n,nx,ny,Cp,A,C,f):
 
-    tolerance=1e-7; max_iter=10000; count_iter=0; residual=1.0        #Criterios de Convergencia
+    tolerance=1e-7; max_iter=100000; count_iter=0; residual=1.0        #Criterios de Convergencia
 
     while count_iter <= max_iter and residual > tolerance:  
     
@@ -155,9 +155,9 @@ def Thomas(aS,ap,aN,aW,aE,Su,n,nx,ny,Cp,A,C,f):
         count_iter=count_iter+1                                       #Numero de iteraciones del codigo
         for i in range(1,nx-1):  
             for j in range(1,ny-1):  
-                 
-                residual = np.sqrt(np.mean(np.square(f[i,j]-acum[i,j])))  #VRMS del valor residual
-                acum[i,j] = f[i,j]
+                acum[i,j]=Su[i,j]+aW[i,j]*T[i-1,j]+aE[i,j]*T[i+1,j]+aS[i,j]*T[i,j-1]+aN[i,j]*T[i,j+1]-ap[i,j]*T[i,j]                
+                
+        residual = np.sqrt(np.mean(np.square(acum)))  #VRMS del valor residual
               
     return f,count_iter,residual
 #____________________________________________________________________
