@@ -12,10 +12,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #Definición de variables
-nl=3
+nl=7
 
-lx=1; ly=1; z=0.01
-dxlh=[0.0625]; dylh=[0.0625]
+lx=0.4; ly=0.4; z=0.01
+dxlh=[0.00625]; dylh=[0.00625]
 nxlh=[math.ceil(lx/dxlh[0]+2)]; nylh=[math.ceil(ly/dylh[0]+2)]
 x=np.zeros(int(nxlh[0])); y=np.zeros(int(nylh[0]))
 aWlh=[np.zeros([int(nxlh[0]),int(nylh[0])])]; aElh=[np.zeros([int(nxlh[0]),int(nylh[0])])]
@@ -244,6 +244,8 @@ def M_Interpolation(nx,nx2,ny,ny2,Itrpx,Itrpy):
 def V_Cycle(nl):    
  
     Restriction(nl)
+    Prolongation(1)
+    Restriction(1)
     Prolongation(nl)
 
 #________________________
@@ -319,8 +321,8 @@ T=boundaries(T,nxlh[0],nylh[0],dxlh[0],dylh[0],flux,kT)              #Se estable
  
 Plot_T(T,x,y,dxlh[0],dylh[0],lx,ly,nxlh[0],nylh[0])                 #Se grafican los resultados
 print(T)
-#print(ci)
-#print(r)
+print(iter_GS)
+print(residual)
 end= time.process_time()
 print(end-start)
 
