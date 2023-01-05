@@ -21,6 +21,10 @@ A=np.zeros(n); Cp=np.zeros(n);
 T=np.zeros(n)
 rh=np.zeros(n); tolerance=1e-7
 
+Res=[]
+Tim=[]
+nit=[]
+
 #Ecuaciones discretizadas
 #____________________________________________________________________
 def Ecdiscreta(dx,hpkA,Tamb,TB,n):
@@ -49,7 +53,7 @@ def Ecdiscreta(dx,hpkA,Tamb,TB,n):
 #____________________________________________________________________
 def Thomas(T,aP,aW,aE,Su,n,Cp,A,TB,tolerance):
 
-    max_iter=1000; residual=1; iter_GS=0
+    max_iter=1000; residual=1; iter_GS=0; m=0; r_0=0
     
     while iter_GS < max_iter and residual > tolerance:  
 
@@ -70,14 +74,25 @@ def Thomas(T,aP,aW,aE,Su,n,Cp,A,TB,tolerance):
           
        for i in range(1,n-1):  #i+1=número de nodo
               rh[i]=Su[i]+aW[i]*T[i-1]+aE[i]*T[i+1]-aP[i]*T[i]
+       
        residual=sqrt(mean(square(rh)))          
+
+       if m==0:
+           r_0=residual
+
+       Res.append(residual/r_0)
+       m=m+1
+       nit.append(m)   
+       t_par= time.process_time()
+       end2=t_par-start
+       Tim.append(end2)
      
     return T,residual,iter_GS
 
 #____________________________________________________________________
 def GaussSeidel(aW,aP,aE,Su,n,T,tolerance):
     
-    max_iter=1000; residual=1; iter_GS=0
+    max_iter=1000; residual=1; iter_GS=0; m=0; r_0=0
     
     while iter_GS < max_iter and residual > tolerance:  
         for i in range(1,n-1):
@@ -88,14 +103,26 @@ def GaussSeidel(aW,aP,aE,Su,n,T,tolerance):
           
         for i in range(1,n-1):  #i+1=número de nodo
             rh[i]=Su[i]+aW[i]*T[i-1]+aE[i]*T[i+1]-aP[i]*T[i]
+
         residual=sqrt(mean(square(rh)))          
+
+        if m==0:
+            r_0=residual 
+
+        Res.append(residual/r_0)
+        m=m+1
+        nit.append(m)   
+        t_par= time.process_time()
+        end2=t_par-start
+        Tim.append(end2)
      
     return T,residual,iter_GS
 #____________________________________________________________________
 def SOR(aW,aP,aE,Su,n,T,tolerance):
     
-    max_iter=1000; residual=1; iter_GS=0
+    max_iter=1000; residual=1; iter_GS=0; m=0; r_0=0
     param=1.2
+
     T0=T
 
     while iter_GS < max_iter and residual > tolerance:  
@@ -107,8 +134,19 @@ def SOR(aW,aP,aE,Su,n,T,tolerance):
 
         for i in range(1,n-1):  #i+1=número de nodo
             rh[i]=Su[i]+aW[i]*T[i-1]+aE[i]*T[i+1]-aP[i]*T[i]
+
         residual=sqrt(mean(square(rh)))   
-          
+
+        if m==0:
+            r_0=residual
+
+        Res.append(residual/r_0)
+        m=m+1
+        nit.append(m)   
+        t_par= time.process_time()
+        end2=t_par-start
+        Tim.append(end2)
+         
     return T,residual,iter_GS
 #____________________________________________________________________
 def boundaries(T,n,dx,Tamb,TB):
@@ -140,10 +178,20 @@ aW,aP,aE,Su = Ecdiscreta(dx,hPkA,Tamb,TB,n) #Se calculan los coeficientes aW,aE,
 T,residual,iter_GS=SOR(aW,aP,aE,Su,n,T,tolerance)   
 
 T=boundaries(T,n,dx,Tamb,TB)
+
+plt.figure(1)
 Plot_T(T,x,dx,Lenght,n)
 
-print(T)
-print(residual)
-print(iter_GS)
+plt.figure(2)
+#plt.subplot(221)
+plt.plot(nit,Res,marker ="o")
+#plt.subplot(222)
+#plt.plot(nit,Tim)
+#plt.subplot(223)
+#plt.plot(Tim,Res)
+
+#print(T)
+#print(residual)
+#print(iter_GS)
 end= time.process_time()
 print(end-start)
