@@ -1,7 +1,6 @@
  # -*- coding: utf-8 -*-
 """
 Spyder Editor
-
 This is a temporary script file.
 """
 import time
@@ -13,7 +12,7 @@ import math
 
 #Definicion de variables
 lx=0.4; ly=0.4  ; z=0.01                                       #Longitud 
-dx=0.0125; dy=0.0125                                             #Pasos
+dx=0.025; dy=0.025                                             #Pasos
 nx=math.ceil(lx/dx)+2; ny=math.ceil(ly/dy)+2; n=nx*ny        #Numero de nodos
 x=np.zeros(nx); y=np.zeros(ny)                               #Malla Graficas
 Tos=0; Ton=100; Toe=0; flux=500000;                          #Condiciones de Frontera
@@ -23,6 +22,11 @@ ap=np.zeros([nx,ny]); aW=np.zeros([nx,ny]); aE=np.zeros([nx,ny])
 aS=np.zeros([nx,ny]); aN=np.zeros([nx,ny]); Su=np.zeros([nx,ny])
 T=np.zeros([nx,ny]); acum=np.zeros([nx,ny])
 A=np.zeros(ny); Cp=np.zeros(ny); C=np.zeros(ny)
+
+Res=[]
+Tim=[]
+nit=[]
+
 
 #Ecuaciones discretizadas: Esta funcion calcula los coeficientes aps
 #____________________________________________________________________
@@ -89,11 +93,14 @@ def Ecdiscreta(dx,dy,z,Aew,Asn,k,Tos,Ton,flux,Toe,nx,ny):
 def Sor_2D(param,aS,ap,aN,aW,aE,Su,nx,ny,f):
 
     tolerance=1e-7; max_iter=100000; count_iter=0; residual=1.0        #Criterios de Convergencia
-
+    f0=np.zeros([nx,ny]); m=0; r_0=0 
+    
     while count_iter <= max_iter and residual >  tolerance:  
     
-        f0=f                                                         #Valor inicial de la funcion
-   
+        for i in range(nx):
+                for jj in range(ny):
+                    f0[i,jj]=f[i,jj]
+
         for i in range(1,nx-1):
             for j in range(1,ny-1):
            
@@ -105,6 +112,16 @@ def Sor_2D(param,aS,ap,aN,aW,aE,Su,nx,ny,f):
                 acum[i,j]=Su[i,j]+aW[i,j]*T[i-1,j]+aE[i,j]*T[i+1,j]+aS[i,j]*T[i,j-1]+aN[i,j]*T[i,j+1]-ap[i,j]*T[i,j]                
                 
         residual = np.sqrt(np.mean(np.square(acum)))  #VRMS del valor residual
+
+        if m==0:
+            r_0=residual
+
+        Res.append(residual/r_0)
+        m=m+1
+        nit.append(m)   
+        t_par= time.process_time()
+        end2=t_par-start
+        Tim.append(end2)
     
     return f,count_iter,residual
 #____________________________________________________________________
@@ -112,6 +129,7 @@ def Sor_2D(param,aS,ap,aN,aW,aE,Su,nx,ny,f):
 def GaussSeidel(aS,ap,aN,aW,aE,Su,nx,ny,f):
 
     tolerance=1e-7; max_iter=100000; count_iter=0; residual=1.0        #Criterios de Convergencia
+    m=0; r_0=0
 
     while count_iter <= max_iter and residual > tolerance:  
       
@@ -126,6 +144,16 @@ def GaussSeidel(aS,ap,aN,aW,aE,Su,nx,ny,f):
                 acum[i,j]=Su[i,j]+aW[i,j]*T[i-1,j]+aE[i,j]*T[i+1,j]+aS[i,j]*T[i,j-1]+aN[i,j]*T[i,j+1]-ap[i,j]*T[i,j]                
                 
         residual = np.sqrt(np.mean(np.square(acum)))  #VRMS del valor residual
+
+        if m==0:
+            r_0=residual
+
+        Res.append(residual/r_0)
+        m=m+1
+        nit.append(m)   
+        t_par= time.process_time()
+        end2=t_par-start
+        Tim.append(end2)
           
     return f,count_iter,residual
 
@@ -135,6 +163,7 @@ def GaussSeidel(aS,ap,aN,aW,aE,Su,nx,ny,f):
 def Thomas(aS,ap,aN,aW,aE,Su,n,nx,ny,Cp,A,C,f):
 
     tolerance=1e-7; max_iter=100000; count_iter=0; residual=1.0        #Criterios de Convergencia
+    m=0; r_0=0
 
     while count_iter <= max_iter and residual > tolerance:  
     
@@ -158,6 +187,16 @@ def Thomas(aS,ap,aN,aW,aE,Su,n,nx,ny,Cp,A,C,f):
                 acum[i,j]=Su[i,j]+aW[i,j]*T[i-1,j]+aE[i,j]*T[i+1,j]+aS[i,j]*T[i,j-1]+aN[i,j]*T[i,j+1]-ap[i,j]*T[i,j]                
                 
         residual = np.sqrt(np.mean(np.square(acum)))  #VRMS del valor residual
+
+        if m==0:
+            r_0=residual
+
+        Res.append(residual/r_0)
+        m=m+1
+        nit.append(m)   
+        t_par= time.process_time()
+        end2=t_par-start
+        Tim.append(end2)
               
     return f,count_iter,residual
 #____________________________________________________________________
@@ -197,7 +236,7 @@ def Plot_T(T,x,y,dx,dy,lx,ly,nx,ny):
 #____________________________________________________________________
 #Programa principal
 
-aW, ap, aE, aS, aN, Su=Ecdiscreta(dx,dy,z,Aew,Asn,k,Tos,Ton,flux,Toe,nx,ny) #Se calculan los coeficientes aW,aE,ap,Su,Sp
+aW, ap, aE, aS, aN, Su = Ecdiscreta(dx,dy,z,Aew,Asn,k,Tos,Ton,flux,Toe,nx,ny) #Se calculan los coeficientes aW,aE,ap,Su,Sp
 
 T,ci,r =Sor_2D(1.2,aS,ap,aN,aW,aE,Su,nx,ny,T)   #Se resuelve la matriz Tridiagonal por el algoritmo de SOR
 #T,ci,r =GaussSeidel(aS,ap,aN,aW,aE,Su,nx,ny,T)   #Se resuelve la matriz Tridiagonal por el algoritmo de SOR
@@ -206,9 +245,21 @@ T,ci,r =Sor_2D(1.2,aS,ap,aN,aW,aE,Su,nx,ny,T)   #Se resuelve la matriz Tridiagon
 
 T=boundaries(T,nx,ny,dx,dy,flux,k)              #Se establecen las temperaturas de las fronteras
  
+plt.figure(1)
 Plot_T(T,x,y,dx,dy,lx,ly,nx,ny)                 #Se grafican los resultados
-print(T)
-print(ci)
-print(r)
+
+plt.figure(2)
+plt.subplot(221)
+plt.plot(nit,Res)
+plt.subplot(222)
+plt.plot(nit,Tim)
+plt.subplot(223)
+plt.plot(Tim,Res)
+
+
+
+#print(T)
+#print(ci)
+#print(r)
 end= time.process_time()
 print(end-start)
