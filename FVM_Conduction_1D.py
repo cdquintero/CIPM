@@ -120,10 +120,12 @@ def GaussSeidel(aW,aP,aE,Su,n,T,tolerance):
 #____________________________________________________________________
 def SOR(aW,aP,aE,Su,n,T,tolerance):
     
+    T0=np.zeros(n)
     max_iter=1000; residual=1; iter_GS=0; m=0; r_0=0
     param=1.2
 
-    T0=T
+    for i in range(n):
+        T0[i]=T[i]
 
     while iter_GS < max_iter and residual > tolerance:  
         for i in range(1,n-1):
