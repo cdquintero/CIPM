@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #Definición de variables
-nl=6
+nl=4
 x0=0.0; lx=1.0
 Lenght= lx-x0
 
@@ -32,10 +32,8 @@ Tlh=[150*np.ones(nlh[0]+2)]
 
 A=0.01; k=5; q=20000; TA=100; TB=500;
 
-tolerance=1e-7; max_iter=10000; count_iter=0; residual=1.0; iter_MM=0
-V_aux=[0,0,0]
-
-n=0  
+tolerance=1e-7; max_iter=10000; count_iter=0; residual=1.0; 
+V_aux=[0,0,0]  
     
 ResFMG6=[]
 TimFMG6=[]
@@ -99,16 +97,16 @@ def Ecdiscreta(aP,aW,aE,Su,dx,k,A,q,TA,TB,n):
 def SOR(aP,aW,aE,Su,nx,T,iter_max):
    
     param=1.0
-    T0=np.zeros(n)
+    T0=np.zeros(nx+2)
   
-#    for i in range(n):
- #       T0[i]=T[i]
+    for i in range(nx):
+        T0[i]=T[i]
                 
     iter_GS=0
     
     while iter_GS < iter_max :  
         for i in range(1,nx+1):           
-            T[i]=(Su[i-1]+aW[i-1]*T[i-1]+aE[i-1]*T[i+1])/aP[i-1]
+            T[i]=(1.0-param)*T0[i]+param*(Su[i-1]+aW[i-1]*T[i-1]+aE[i-1]*T[i+1])/aP[i-1]
    
         iter_GS=iter_GS+1
          
@@ -147,7 +145,6 @@ def Restriction(nr):
             for j in range(1,nlh[i]+1):
                 rlh[i][j]=rlh[i][j]-(aPlh[i][j-1]*elh[i][j]-aWlh[i][j-1]*elh[i][j-1]-aElh[i][j-1]*elh[i][j+1])
 #____________________________________________________________________
-
 
 def Restriction_FMG(n_r):
 
@@ -220,13 +217,13 @@ def Interpolation(e2lh,n2lh,nlh):
            
     return ehp
 #____________________________________________________________________
-def V_Cycle(nl,a,T):    
+def V_Cycle(nl):    
     
     Restriction(nl)
     Prolongation(nl)
 
 #____________________________________________________________________
-def W_Cycle(nl,a,T):    
+def W_Cycle(nl):    
     
     Restriction(nl)
     Prolongation(1)
@@ -238,7 +235,7 @@ def W_Cycle(nl,a,T):
     Prolongation(nl)
 
 #____________________________________________________________________
-def F_Cycle(nl,a,T):
+def F_Cycle(nl):
     
     Restriction(nl)
     Prolongation(1)
@@ -249,7 +246,7 @@ def F_Cycle(nl,a,T):
 
 #___________________________________________________________________
 
-def FMG_Cycle(nl,a):
+def FMG_Cycle(nl):
     
     for i in range(1,nl):                
 
@@ -337,7 +334,7 @@ def Resverse():
 
 #____________________________________________________________________
 
-def R_norm(n):
+def R_norm(n,r_0):
     
     ResFMG6.append(residual/r_0)
     n=n+1
@@ -349,92 +346,89 @@ def R_norm(n):
     return (n)
 
 #____________________________________________________________________
+
+def Multimalla_VWF(T,residual):
+         
+    n=0; iter_MM=0
+    Parametros(nl,0)    
+
+    while iter_MM < max_iter and residual > tolerance:  
+
+        T=SOR(aPlh[0],aWlh[0],aElh[0],Sulh[0],nlh[0],T,5)  
+        rlh[0],residual = Residual(aPlh[0],aWlh[0],aElh[0],Sulh[0],rlh[0],nlh[0],T)
+
+        if n==0:
+            r_0=residual
+            n=R_norm(n,r_0)
+    
+        V_Cycle(nl)
+#        W_Cycle(nl)
+#        F_Cycle(nl)
+
+        T=T+elh[0]
+        T=SOR(aPlh[0],aWlh[0],aElh[0],Sulh[0],nlh[0],T,2)  
+        rlh[0],residual = Residual(aPlh[0],aWlh[0],aElh[0],Sulh[0],rlh[0],nlh[0],T)
+
+        n=R_norm(n,r_0)
+      
+    T=boundaries(T,nlh[0],dxlh[0],TA,TB)
+
+    return(T)
+#____________________________________________________________________
+
+def Multimalla_FMG(T,residual):
+
+    n=0; iter_MM=0
+    Parametros(nl,1)    
+
+    Tlh[0]=SOR(aPlh[0],aWlh[0],aElh[0],Sulh[0],nlh[0],Tlh[0],10)  
+    rlh[0], residual = Residual(aPlh[0],aWlh[0],aElh[0],Sulh[0],rlh[0],nlh[0],Tlh[0])
+
+    r_0=residual
+    n=R_norm(n,r_0)
+
+    FMG_Cycle(nl)
+
+    for i in range (nl):
+        elh[i]=np.zeros(nlh[i]+2)
+
+    Resverse()
+
+    rlh[0], residual = Residual(aPlh[0],aWlh[0],aElh[0],Sulh[0],rlh[0],nlh[0],Tlh[0])
+
+    n=R_norm(n,r_0)
+
+    while iter_MM < max_iter and residual > tolerance:  
+
+        Restriction(nl)
+        Prolongation(nl)
+
+        Tlh[0]=Tlh[0]+elh[0]
+        Tlh[0]=SOR(aPlh[0],aWlh[0],aElh[0],Sulh[0],nlh[0],Tlh[0],2)  
+        rlh[0],residual = Residual(aPlh[0],aWlh[0],aElh[0],Sulh[0],rlh[0],nlh[0],Tlh[0])
+        n = R_norm(n,r_0)
+    
+        iter_MM = iter_MM+1     
+
+        for i in range (nl):
+            elh[i]=np.zeros(nlh[i]+2)
+
+    Tlh[0]=boundaries(Tlh[0],nlh[0],dxlh[0],TA,TB)
+
+    return(Tlh[0])
+#____________________________________________________________________
 #Programa principal
 
 xlh[0],xclh[0] = Mallado(xclh[0], xlh[0], x0, lx, nlh[0])
 aPlh[0],aWlh[0],aElh[0],Sulh[0]=Ecdiscreta(aPlh[0],aWlh[0],aElh[0],Sulh[0],dxlh[0],k,A,q,TA,TB,nlh[0]) #Se calculan los coeficientes aW,aE,ap,Su,Sp
 
-"""V,W,F"""
-#Parametros(nl,0)    
-#=======================
-
-"""FMG"""
-Parametros(nl,1)    
-Tlh[0]=SOR(aPlh[0],aWlh[0],aElh[0],Sulh[0],nlh[0],T,10)  
-rlh[0], residual = Residual(aPlh[0],aWlh[0],aElh[0],Sulh[0],rlh[0],nlh[0],Tlh[0])
-
-r_0=residual
-n=R_norm(n)
-
-FMG_Cycle(nl,1)
-
-for i in range (nl):
-    elh[i]=np.zeros(nlh[i]+2)
-
-Resverse()
-
-rlh[0], residual = Residual(aPlh[0],aWlh[0],aElh[0],Sulh[0],rlh[0],nlh[0],Tlh[0])
-
-n=R_norm(n)
-
-#=======================
-
-
-while iter_MM < max_iter and residual > tolerance:  
-
-    """V,W,F"""               
-#    T=SOR(aPlh[0],aWlh[0],aElh[0],Sulh[0],nlh[0],T,5)  
-#    rlh[0],residual = Residual(aPlh[0],aWlh[0],aElh[0],Sulh[0],rlh[0],nlh[0],T)
-
-#    if n==0:
-#        r_0=residual
-#        n=R_norm(n)
-    
-#    V_Cycle(nl,0,T)
-#    W_Cycle(nl,0,T)
-#    F_Cycle(nl,0,T)
-
-#    T=T+elh[0]
-#    T=SOR(aPlh[0],aWlh[0],aElh[0],Sulh[0],nlh[0],T,2)  
-#    rlh[0],residual = Residual(aPlh[0],aWlh[0],aElh[0],Sulh[0],rlh[0],nlh[0],T)
-
-#    n=R_norm(n)
-
-#=======================
-
-    """FMG"""       
-    Restriction(nl)
-    Prolongation(nl)
-
-    Tlh[0]=Tlh[0]+elh[0]
-    Tlh[0]=SOR(aPlh[0],aWlh[0],aElh[0],Sulh[0],nlh[0],Tlh[0],2)  
-    rlh[0],residual = Residual(aPlh[0],aWlh[0],aElh[0],Sulh[0],rlh[0],nlh[0],Tlh[0])
-    n = R_norm(n)
-#=======================
-    
-    iter_MM=iter_MM+1     
-
-    for i in range (nl):
-        elh[i]=np.zeros(nlh[i]+2)
-
-"""V,W,F"""       
-#T=boundaries(T,nlh[0],dxlh[0],TA,TB)
-#=======================
-
-"""FMG"""       
-Tlh[0]=boundaries(Tlh[0],nlh[0],dxlh[0],TA,TB)
-#=======================
-
-
-plt.figure(1)
-"""V,W,F"""       
+#T = Multimalla_VWF(T,residual)
+#plt.figure(1)
 #Plot_T(T,xclh[0])
-#=======================
 
-"""FMG"""       
+Tlh[0] = Multimalla_FMG(Tlh[0],residual)
+plt.figure(1)
 Plot_T(Tlh[0],xclh[0])
-#=======================
-
 
 #plt.figure(2)
 #plt.subplot(221)
@@ -443,8 +437,6 @@ Plot_T(Tlh[0],xclh[0])
 #plt.plot(nitV,TimV)
 #plt.subplot(223)
 #plt.plot(TimV,ResV)
-
-
 
 #print(T)
 #print(residual)
